@@ -1181,6 +1181,9 @@ static void DoPragma (void)
     SB_Clear (MLine);
     Pass1 (Line, MLine);
 
+    /* Check if this is a #pragma once directive to exit processing this file early if it is. */
+
+
     /* Convert the directive into the operator */
     SB_CopyStr (Line, "_Pragma (");
     SB_Reset (MLine);

@@ -81,6 +81,7 @@ typedef enum {
     PRAGMA_INLINE_STDFUNCS,
     PRAGMA_LOCAL_STRINGS,
     PRAGMA_MESSAGE,
+    PRAGMA_ONCE,
     PRAGMA_OPTIMIZE,
     PRAGMA_REGISTER_VARS,
     PRAGMA_REGVARADDR,
@@ -118,6 +119,7 @@ static const struct Pragma {
     { "inline-stdfuncs",        PRAGMA_INLINE_STDFUNCS    },
     { "local-strings",          PRAGMA_LOCAL_STRINGS      },
     { "message",                PRAGMA_MESSAGE            },
+    { "once",                   PRAGMA_ONCE               },
     { "optimize",               PRAGMA_OPTIMIZE           },
     { "register-vars",          PRAGMA_REGISTER_VARS      },
     { "regvaraddr",             PRAGMA_REGVARADDR         },
@@ -572,6 +574,22 @@ ExitPoint:
 }
 
 
+static void OncePragma(StrBuf* B)
+/* Handle a pragma that expects a string parameter */
+{
+    StrBuf S = AUTO_STRBUF_INITIALIZER;
+
+    /* We expect a string here */
+    if (GetString(B, &S)) {
+        /* Call the given function with the string argument */
+        Func(SB_GetConstBuf(&S));
+    }
+
+    /* Call the string buf destructor */
+    SB_Done(&S);
+}
+
+
 
 static void CharMapPragma (StrBuf* B)
 /* Change the character map */
@@ -823,9 +841,9 @@ static void ParsePragma (void)
         goto ExitPoint;
     }
 
-    /* Check for an open paren */
+    /* Check for an open paren (unless its #pragma once)*/
     SB_SkipWhite (&B);
-    if (SB_Get (&B) != '(') {
+    if (Pragma != PRAGMA_ONCE && SB_Get (&B) != '(') {
         Error ("'(' expected");
         goto ExitPoint;
     }
@@ -890,6 +908,10 @@ static void ParsePragma (void)
 
         case PRAGMA_MESSAGE:
             StringPragma (&B, MakeMessage);
+            break;
+
+        case PRAGMA_ONCE:
+            OncePragma (&B);
             break;
 
         case PRAGMA_OPTIMIZE:
